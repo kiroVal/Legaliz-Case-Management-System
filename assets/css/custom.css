@@ -1,0 +1,24 @@
+
+/* Custom theme overrides */
+:root{
+  --brand:#0d6efd;
+  --bg:#0b1220;
+  --card:#ffffff;
+  --text:#1a1f2e;
+}
+body{background:#f6f8fb;color:var(--text);}
+.navbar{box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.sidebar{
+  width:260px; flex:0 0 260px; background:#111827; color:#e5e7eb; min-height:100vh;
+  position: sticky; top:0;
+}
+.sidebar a{color:#cbd5e1; text-decoration:none; display:block; padding:.65rem 1rem; border-radius:.5rem;}
+.sidebar a:hover, .sidebar a.active{background:#1f2937; color:#fff;}
+.main{flex:1; padding:1.25rem;}
+.card{border:0; box-shadow:0 10px 30px rgba(17,24,39,.06); border-radius:1rem;}
+.stat .h3{margin:0;}
+.footer{color:#64748b;}
+.badge-role{font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; background:#e2e8f0; color:#334155;}
+.table thead th{font-weight:600; color:#475569; background:#f8fafc;}
+.form-control, .form-select{border-radius:.75rem;}
+.btn{border-radius:.75rem; padding:.5rem .9rem;}
