@@ -41,15 +41,14 @@ pipeline {
             }
         }
 
-        stage('Deploy to Test Env') {
-            steps {
-                echo 'Deploying to local test environment...'
-                sh '''
-                    php -S localhost:8081 -t public/ > /dev/null 2>&1 &
-                    sleep 5
-                '''
-            }
-        }
+       stage('Deploy to Test Env') {
+           steps {
+               echo 'Deploying to local test environment...'
+               sh 'start /B php -S localhost:8081 -t public/'
+               sleep 5 // give server time to start
+           }
+       }
+
 
         stage('Integration Test') {
             steps {
