@@ -12,6 +12,7 @@ pipeline {
             steps {
                 git branch: 'main',
                     url: 'git@github.com:kiroVal/Legaliz-Case-Management-System.git'
+
             }
         }
 
