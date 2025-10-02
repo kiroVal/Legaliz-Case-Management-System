@@ -1,44 +1,91 @@
 pipeline {
-  agent any
-  options {
-    buildDiscarder(logRotator(numToKeepStr: '5'))
-  }
-  environment {
-    HEROKU_API_KEY = credentials('heroku-api-key')
-    IMAGE_NAME = 'michael877/cicd_legaliz_pipeline' //replace with your dockerhub repository with username, if none, create a repo in dockerhub
-    IMAGE_TAG = 'latest'
-    APP_NAME = 'jenkins-example-laravel'
-  }
-  stages {
-    stage('Build') {
-      steps {
-        sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
-      }
+    agent any
+
+    environment {
+        APP_NAME = "syntaxxedlcms"
+        DOCKER_IMAGE = "michael/${APP_NAME}"
+        DOCKER_TAG = "latest"
     }
-    stage('Login') {
-      steps {
-        sh 'echo $HEROKU_API_KEY | docker login --username=_ --password-stdin registry.heroku.com'
-      }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'git@github.com:kiroVal/Legaliz-Case-Management-System.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Installing PHP dependencies...'
+                sh '''
+                    if [ -f composer.json ]; then
+                        composer install --no-interaction --prefer-dist
+                    else
+                        echo "No composer.json found, skipping composer install"
+                    fi
+                '''
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                echo 'Running PHP Unit tests...'
+                sh '''
+                    if [ -f phpunit.xml ] || [ -f phpunit.xml.dist ]; then
+                        ./vendor/bin/phpunit --testdox
+                    else
+                        echo "No PHPUnit config found, skipping tests"
+                    fi
+                '''
+            }
+        }
+
+        stage('Deploy to Test Env') {
+            steps {
+                echo 'Deploying to local test environment...'
+                sh '''
+                    php -S localhost:8081 -t public/ > /dev/null 2>&1 &
+                    sleep 5
+                '''
+            }
+        }
+
+        stage('Integration Test') {
+            steps {
+                echo 'Running integration tests...'
+                sh '''
+                    curl -I http://localhost:8081 || exit 1
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+                sh """
+                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                """
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials',
+                                                 usernameVariable: 'DOCKER_USER',
+                                                 passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    '''
+                }
+            }
+        }
     }
-    stage('Push to Heroku registry') {
-      steps {
-        sh '''
-          docker tag $IMAGE_NAME:$IMAGE_TAG registry.heroku.com/$APP_NAME/web
-          docker push registry.heroku.com/$APP_NAME/web
-        '''
-      }
+
+    post {
+        always {
+            echo "Pipeline finished."
+        }
     }
-    stage('Release the image') {
-      steps {
-        sh '''
-          heroku container:release web --app=$APP_NAME
-        '''
-      }
-    }
-  }
-  post {
-    always {
-      sh 'docker logout'
-    }
-  }
 }
