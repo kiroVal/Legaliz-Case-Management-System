@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "syntaxxedlcms"
-        DOCKER_IMAGE = "michael/${APP_NAME}"
-        DOCKER_TAG = "latest"
+    APP_NAME = "syntaxxedlcms"
+    DOCKER_IMAGE = "michael877/${APP_NAME}"
+    DOCKER_TAG = "latest"
     }
 
     stages {
