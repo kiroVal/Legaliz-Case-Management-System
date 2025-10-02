@@ -10,12 +10,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/kiroVal/Legaliz-Case-Management-System.git'
+                git branch: 'main', url: 'https://github.com/kiroVal/Legaliz-Case-Management-System.git'
             }
         }
 
-        stage('Build') {
+        stage('Install Dependencies') {
             steps {
                 echo 'Installing PHP dependencies...'
                 sh '''
@@ -41,38 +40,31 @@ pipeline {
             }
         }
 
-       stage('Deploy to Test Env') {
-           steps {
-               echo 'Deploying to local test environment...'
-               sh 'start /B php -S localhost:8081 -t public/'
-               sleep 5 // give server time to start
-           }
-       }
-
+        stage('Start PHP Server') {
+            steps {
+                echo 'Starting PHP built-in server...'
+                sh 'nohup php -S 127.0.0.1:8081 > server.log 2>&1 &'
+                sleep 5
+            }
+        }
 
         stage('Integration Test') {
             steps {
                 echo 'Running integration tests...'
-                sh '''
-                    curl -I http://localhost:8081 || exit 1
-                '''
+                sh 'curl -I http://127.0.0.1:8081 || exit 1'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                sh """
-                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-                """
+                sh 'docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials',
-                                                 usernameVariable: 'DOCKER_USER',
-                                                 passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
@@ -84,6 +76,8 @@ pipeline {
 
     post {
         always {
+            echo "Cleaning up..."
+            sh "pkill -f 'php -S' || true"
             echo "Pipeline finished."
         }
     }
