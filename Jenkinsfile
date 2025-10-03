@@ -2,9 +2,14 @@ pipeline {
     agent any
 
     environment {
-    APP_NAME = "syntaxxedlcms"
-    DOCKER_IMAGE = "michael877/${APP_NAME}"
-    DOCKER_TAG = "latest"
+        APP_NAME = "syntaxxedlcms"
+        DOCKER_IMAGE = "michael877/${APP_NAME}"
+        DOCKER_TAG = "latest"
+        
+        // *** NEW: Define the absolute path to the Composer executable (Windows path) ***
+        // !! CRITICAL: YOU MUST REPLACE THIS PLACEHOLDER PATH !!
+        COMPOSER_BIN = "C:/path/to/composer/composer.phar" 
+        // Example Windows Path format: "C:/ProgramData/ComposerSetup/bin/composer.phar"
     }
 
     stages {
@@ -19,7 +24,8 @@ pipeline {
                 echo 'Installing PHP dependencies...'
                 sh '''
                     if [ -f composer.json ]; then
-                        composer install --no-interaction --prefer-dist
+                        # Use the absolute path defined in the environment
+                        "${COMPOSER_BIN}" install --no-interaction --prefer-dist
                     else
                         echo "No composer.json found, skipping composer install"
                     fi
@@ -77,7 +83,8 @@ pipeline {
     post {
         always {
             echo "Cleaning up..."
-            sh "pkill -f 'php -S' || true"
+            // Using taskkill for Windows agent (Taskkill uses the Image Name, php.exe)
+            sh "taskkill /F /IM php.exe || true" 
             echo "Pipeline finished."
         }
     }
