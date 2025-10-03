@@ -1,0 +1,13 @@
+{
+    "name": "kiroval/legaliz-case-management-system",
+    "description": "Legaliz Case Management System",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "files": [
+            "config.php"
+        ]
+    }
+}
